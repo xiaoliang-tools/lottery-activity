@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西游抽奖H5</title>
+    <style>
+        /* 全局样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background-size: cover;
+            animation: slide 15s infinite;
+        }
+
+        /* 页面容器 */
+        .page {
+            display: none;
+            padding: 20px;
+            min-height: 100vh;
+            background: rgba(255,255,255,0.9);
+        }
+
+        /* 登录页 */
+        .login-page {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+
+      
+
+
+        .wheel {
+    transition: transform 0.5s ease-out; /* 添加基础过渡效果 */
+}
+/* 转盘容器 */
+.lottery-container {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    margin: 20px auto;
+    border-radius: 50%;
+    background: #FFF5F7;  /* 浅粉色背景 */
+    box-shadow: 0 4px 12px rgba(255,68,69,0.1);
+}
+
+/* 转盘主体 */
+.wheel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+/* 奖品扇形区 */
+.sector {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(50% 50%, 100% 0, 100% 100%);
+    transform-origin: 50% 50%;
+    background: linear-gradient(45deg, #FFEBED, #FFD5D9); /* 渐变浅红 */
+}
+
+/* 文字显示优化方案 */
+.prize-text {
+    position: absolute;
+    width: 80px;
+    font-size: 16px;      /* 放大字号 */
+    color: #FF4445;      /* 品牌红色 */
+    font-weight: bold;
+    text-align: center;
+    z-index: 2;
+    /* 新增文字特效 */
+    text-shadow: 0 2px 4px rgba(255,255,255,0.8); /* 白色阴影提升对比度 */
+    /* 精确定位公式 */
+    left: 50%;
+    top: 50%;
+    transform-origin: -40px 40px; /* 调整旋转基点 */
+}
+
+/* 四个分区的精准定位 */
+.sector:nth-child(1) .prize-text { transform: rotate(45deg) translate(80px, -15px); }
+.sector:nth-child(2) .prize-text { transform: rotate(135deg) translate(80px, 15px); }
+.sector:nth-child(3) .prize-text { transform: rotate(225deg) translate(80px, 15px); }
+.sector:nth-child(4) .prize-text { transform: rotate(315deg) translate(80px, -15px); }
+
+/* 中心红包区域 */
+.center-area {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: #FF4445;  /* 品牌红色 */
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(255,68,69,0.3);
+    z-index: 1;  /* 确保在文字下方 */
+}
+
+.big-redpacket {
+    color: white;
+    font-size: 20px;      /* 放大中心文字 */
+    font-weight: bold;
+    text-align: center;
+}
+
+        /* 按钮样式 */
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #1677ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+     /* 新增退出按钮样式 */
+     
+     .logout-btn {
+        position: fixed;
+            top: 12px;
+            right: 12px;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: all 0.2s ease;}
+  
+        /* 背景轮播动画 */
+        @keyframes slide {
+            0%, 33% { background-image: url('images/bg1.jpg'); }
+            34%, 66% { background-image: url('images/bg2.jpg'); }
+            67%, 100% { background-image: url('images/bg3.jpg'); }
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            border-radius: 8px;
+        }
+        /* 转盘容器 */
+
+
+
+
+/* 操作按钮容器 */
+.action-buttons {
+    width: 80%;
+    max-width: 300px;
+    margin: 20px auto;
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(135deg, #40a9ff, #1677ff);
+    color: white;
+    font-size: 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+    </style>
+</head>
+<body>
+
+  <!-- 登录页结构 -->
+  <div class="page" id="loginPage" style="display: block;">
+    <h2 style="text-align: center;"
+               color: #333; 
+               font-size: 22px;
+               border-bottom: 2px solid #1677ff;
+               display: inline-block;
+               padding-bottom: 5px;">
+        大话西游活动登录
+
+    </h2>
+    <form id="loginForm">
+        <!-- 邮箱输入框 -->
+        <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #333;">网易邮箱</label>
+            <input type="email" 
+                   id="email" 
+                   placeholder="example@163.com"
+                   style="width: 100%;
+                          padding: 12px;
+                          border: 1px solid #e0e0e0;
+                          border-radius: 8px;
+                          font-size: 14px;">
+        </div>
+
+        <!-- 密码输入框 -->
+        <div class="input-group" style="margin-top: 15px;">
+            <label style="display: block; margin-bottom: 8px; color: #333;">密码</label>
+            <input type="password" 
+                   id="password" 
+                   placeholder="请输入密码"
+                   style="width: 100%;
+                          padding: 12px;
+                          border: 1px solid #e0e0e0;
+                          border-radius: 8px;
+                          font-size: 14px;">
+        </div>
+
+        <!-- 测试账号提示 -->
+        <div class="test-account-hint" 
+             style="margin: 15px 0;
+                   padding: 12px;
+                   background: #f0f8ff;
+                   border-radius: 6px;
+                   border: 1px solid #cce6ff;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <svg style="width: 16px; height: 16px; margin-right: 8px;" viewBox="0 0 24 24">
+                    <path fill="#1677ff" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <span style="color: #1677ff; font-size: 13px;">测试账号</span>
+            </div>
+            <div style="font-size: 13px; color: #666;">
+                <div>邮箱：test@163.com</div>
+                <div style="margin-top: 4px;">密码：123456</div>
+            </div>
+        </div>
+
+        <!-- 登录按钮 -->
+        <button type="button" 
+                onclick="handleLogin()"
+                style="width: 100%;
+                       padding: 14px;
+                       background: #1677ff;
+                       color: white;
+                       border: none;
+                       border-radius: 8px;
+                       font-size: 15px;
+                       cursor: pointer;">
+            立即登录
+        </button>
+    </form>
+</div>
+
+    <!-- 抽奖页 -->
+    <div class="page" id="lotteryPage" style="display: none;">
+        <button class="logout-btn" onclick="logout()">退出登录</button>
+        
+        <h2 style="text-align: center; 
+        color: #FF4445; 
+        font-size: 24px;
+        margin: 15px 0;">
+ 西游有好礼 幸运大抽奖
+</h2>
+
+        
+        <!-- 转盘容器 -->
+        <div class="lottery-container">
+            <div class="wheel" id="mainWheel">
+                <!-- 奖品扇形区域 -->
+                <div class="sector" style="transform: rotate(0deg)">
+                    <div class="prize-text">10元红包</div>
+                </div>
+                <div class="sector" style="transform: rotate(90deg)">
+                    <div class="prize-text">定制水杯</div>
+                </div>
+                <div class="sector" style="transform: rotate(180deg)">
+                    <div class="prize-text">会员3天</div>
+                </div>
+                <div class="sector" style="transform: rotate(270deg)">
+                    <div class="prize-text">西游手办</div>
+                </div>
+                
+                <!-- 中心红包区域 -->
+                <div class="center-area">
+                    <div class="big-redpacket">66元红包</div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- 操作按钮 -->
+        <div class="action-buttons">
+            <button onclick="handleSpin()" id="spinBtn">立即抽奖（剩余次数：<span id="chances">1</span>）</button>
+            <button onclick="showPage('taskPage')">去做任务获取次数</button>
+        </div>
+    </div>
+    
+
+
+    <!-- 任务页 -->
+    <div class="page" id="taskPage">
+        <h2> <h2 style="text-align: center; 
+            color: #FF4445;  /* 红色 */
+            margin: 20px 0;
+            font-size: 22px;
+            text-shadow: 0 2px 4px rgba(255,20,147,0.2);">
+      每日任务
+  </h2></h2>
+
+
+        <div class="task">
+            <h3>每日登录</h3>
+            <button id="loginTask" onclick="completeTask('login')">立即完成</button>
+        </div>
+        <div class="task">
+            <h3>每日分享</h3>
+            <button id="shareTask" onclick="completeTask('share')">立即分享</button>
+        </div>
+        <button onclick="showPage('lotteryPage')">返回抽奖</button>
+        <button class="logout-btn" onclick="logout()">退出登录</button>
+    </div>
+
+    <!-- 地址弹窗 -->
+   <!-- 在原有代码基础上修改地址弹窗部分 -->
+   <div class="modal" id="addressModal">
+    <div class="modal-content" style="padding: 15px;">
+    
+        <!-- 标题栏结构 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: #333; font-size: 16px;">请填写收货地址</h3>
+            <button onclick="closeAddressModal()" 
+                    style="
+                        background: none;
+                        border: none;
+                        width: 24px;      /* 固定宽度 */
+                        height: 24px;     /* 固定高度 */
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 20px;
+                        color: #FF4445;
+                        cursor: pointer;
+                        padding: 0;
+                        margin: 0;
+                        transition: all 0.3s;
+                    ">
+                &times;
+            </button>
+        </div>
+
+        <form id="addressForm">
+            <!-- 原有表单结构保持不变 -->
+            <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 5px; color: #666;">收件人：</div>
+                <input type="text" id="name" 
+                       style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"
+                       placeholder="请输入收件人姓名">
+                <div class="error-msg" id="nameError" style="color: red; font-size: 12px; height: 18px;"></div>
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 5px; color: #666;">联系电话：</div>
+                <input type="tel" id="phone" 
+                       style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"
+                       placeholder="请输入11位手机号码">
+                <div class="error-msg" id="phoneError" style="color: red; font-size: 12px; height: 18px;"></div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="margin-bottom: 5px; color: #666;">详细地址：</div>
+                <input type="text" id="address" 
+                       style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"
+                       placeholder="例：XX省XX市XX区XX街道XX号">
+                <div class="error-msg" id="addressError" style="color: red; font-size: 12px; height: 18px;"></div>
+            </div>
+            
+            <button type="button" 
+                    onclick="submitAddress()"
+                    style="background: #1677ff; color: white; padding: 12px; border-radius: 6px; width: 100%">
+                提交
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// 初始化数据
+let prizes = [
+    { type: 'virtual', name: '10元红包', code: 'VIP2023' },
+    { type: 'physical', name: '定制水杯' },
+    { type: 'virtual', name: '会员3天' },
+    { type: 'physical', name: '西游手办' }
+];
+
+// 页面显示控制
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+    const targetPage = document.getElementById(pageId);
+    if(targetPage) {
+        targetPage.style.display = 'block';
+        // 登录后页面显示退出按钮
+        if(pageId !== 'loginPage') {
+            document.querySelectorAll('.logout-btn').forEach(btn => btn.style.display = 'block');
+        }
+    }
+}
+
+// 登录逻辑
+function handleLogin() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if(email === 'test@163.com' && password === '123456') {
+        // 设置登录状态
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // 关键修改：初始化抽奖次数为1
+        localStorage.setItem('lotteryChances', '1');  // ← 这里设置初始值
+        
+        // 跳转至抽奖页
+        showPage('lotteryPage');
+    } else {
+        alert('账号或密码错误');
+    }
+}
+
+// 页面切换控制
+function showPage(pageId) {
+    // 隐藏所有页面
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.display = 'none';
+    });
+    
+    // 显示目标页面
+    const targetPage = document.getElementById(pageId);
+    if(targetPage) {
+        targetPage.style.display = 'block';
+        
+        // 更新抽奖次数显示
+        if(pageId === 'lotteryPage') {
+            updateChancesDisplay();
+        }
+    }
+}
+
+// 初始化检查登录状态
+function checkLoginStatus() {
+    if(localStorage.getItem('isLoggedIn')) {
+        showPage('lotteryPage');
+    } else {
+        showPage('loginPage');
+    }
+}
+
+// 在页面显示时更新次数
+function updateChancesDisplay() {
+    const chances = localStorage.getItem('lotteryChances') || 1; // 默认显示1
+    document.getElementById('chances').textContent = chances;
+}
+
+// 页面加载时执行
+window.onload = checkLoginStatus;
+
+
+// 修改后的抽奖逻辑
+function handleSpin() {
+    // 获取转盘元素（确保ID与HTML一致）
+    const wheel = document.getElementById('mainWheel'); // 改为你修改后的ID
+    const spinBtn = document.getElementById('spinBtn');
+    
+    // 安全校验（新增）
+    if (!wheel || !spinBtn) {
+        console.error('页面元素加载异常');
+        return;
+    }
+
+    let chances = parseInt(localStorage.getItem('lotteryChances') || 0);
+    
+    if (chances <= 0) {
+        alert('抽奖次数不足，请先完成任务');
+        return;
+    }
+
+    // 旋转动画修改（关键调整）
+    wheel.style.transition = 'transform 2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+    wheel.style.transform = `rotate(${360 * 5}deg)`; // 替代原来的classList方式
+    spinBtn.disabled = true;
+
+    // 更新次数
+    chances--;
+    localStorage.setItem('lotteryChances', chances);
+    updateChancesDisplay();
+
+    setTimeout(() => {
+        // 重置动画（重要修改）
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        spinBtn.disabled = false;
+        
+        // 结果处理（保持原有逻辑）
+        const result = prizes[Math.floor(Math.random() * prizes.length)];
+        if (result.type === 'physical') {
+            document.getElementById('addressModal').style.display = 'block';
+        } else {
+            alert(`恭喜获得：${result.name}\n兑换码：${result.code}`);
+        }
+    }, 2000);
+}
+
+
+// 新增地址提交逻辑
+function submitAddress() {
+    // 获取输入值
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const address = document.getElementById('address').value.trim();
+    
+    // 清除旧错误提示
+    clearErrors();
+    
+    // 验证逻辑
+    let isValid = true;
+    
+    if (!name) {
+        showError('nameError', '请填写收件人姓名');
+        isValid = false;
+    }
+    
+    if (!phone) {
+        showError('phoneError', '请填写联系电话');
+        isValid = false;
+    } else if (!/^1[3-9]\d{9}$/.test(phone)) {
+        showError('phoneError', '手机号格式不正确');
+        isValid = false;
+    }
+    
+    if (!address) {
+        showError('addressError', '请填写详细地址');
+        isValid = false;
+    } else if (address.length < 5) {
+        showError('addressError', '地址过短，请填写完整地址');
+        isValid = false;
+    }
+    
+    // 提交处理
+    if (isValid) {
+        // 此处可添加实际提交逻辑（示例仅存储到本地）
+        const addressInfo = { name, phone, address };
+        localStorage.setItem('addressInfo', JSON.stringify(addressInfo));
+        
+        // 显示成功反馈
+        showSubmitFeedback(true);
+        setTimeout(() => {
+            document.getElementById('addressModal').style.display = 'none';
+            clearForm();
+        }, 1500);
+         // 提交成功后关闭弹窗
+         closeAddressModal();
+    } else {
+        showSubmitFeedback(false);
+    }
+}
+
+// 错误提示处理
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    element.textContent = message;
+    element.style.display = 'block';
+}
+
+function clearErrors() {
+    document.querySelectorAll('.error-msg').forEach(el => {
+        el.textContent = '';
+        el.style.display = 'none';
+    });
+}
+
+// 提交反馈提示
+function showSubmitFeedback(isSuccess) {
+    const message = isSuccess ? '✅ 提交成功！' : '❌ 提交失败，请检查信息';
+    const color = isSuccess ? '#52c41a' : '#ff4d4f';
+    
+    const feedback = document.createElement('div');
+    feedback.textContent = message;
+    feedback.style = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 15px 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        color: ${color};
+        z-index: 1001;
+    `;
+    
+    document.body.appendChild(feedback);
+    setTimeout(() => feedback.remove(), 1500);
+}
+
+// 清空表单
+function clearForm() {
+    document.getElementById('name').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('address').value = '';
+    clearErrors();
+}
+// 新增关闭函数
+function closeAddressModal() {
+    document.getElementById('addressModal').style.display = 'none';
+    // 清空错误提示
+    document.querySelectorAll('.error-msg').forEach(el => {
+        el.textContent = '';
+        el.style.display = 'none';
+    });
+    // 清空表单（可选）
+    document.getElementById('addressForm').reset();
+}
+
+// 新增退出功能函数
+function logout() {
+    // 清除所有登录相关数据
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('lotteryChances');
+    localStorage.removeItem('tasks');
+    
+    // 跳转至登录页并刷新页面
+    showPage('loginPage');
+    setTimeout(() => location.reload(), 500); // 确保状态完全重置
+}
+
+// 任务系统
+function completeTask(type) {
+    const today = new Date().toDateString();
+    let tasks = JSON.parse(localStorage.getItem('tasks') || '{}');
+
+    if(tasks.date !== today) {
+        tasks = { date: today };
+    }
+
+    if(!tasks[type]) {
+        tasks[type] = true;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        
+        let chances = parseInt(localStorage.getItem('lotteryChances') || 0);
+        chances++;
+        localStorage.setItem('lotteryChances', chances);
+        updateChancesDisplay();
+        alert('任务完成，抽奖次数+1');
+    }
+
+    // 更新按钮状态
+    document.getElementById(`${type}Task`).disabled = tasks[type];
+}
+
+// 更新次数显示
+function updateChancesDisplay() {
+    document.getElementById('chances').textContent = 
+        localStorage.getItem('lotteryChances') || 0;
+}
+
+// 初始化检查登录状态
+function init() {
+    if(localStorage.getItem('isLoggedIn')) {
+        showPage('lotteryPage');
+        // 显示退出按钮
+        document.querySelectorAll('.logout-btn').forEach(btn => btn.style.display = 'block');
+    } else {
+        showPage('loginPage');
+        // 隐藏退出按钮
+        document.querySelectorAll('.logout-btn').forEach(btn => btn.style.display = 'none');
+    }
+    updateChancesDisplay();
+}
+
+// 启动初始化
+init();
+</script>
+</body>
+</html>
